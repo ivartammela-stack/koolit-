@@ -10,11 +10,11 @@ def create_app() -> FastAPI:
     # CORS
     origins = [str(o) for o in settings.BACKEND_CORS_ORIGINS] if settings.BACKEND_CORS_ORIGINS else ["*"]
     app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # hard-coded test
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
     )
 
     # Routers
