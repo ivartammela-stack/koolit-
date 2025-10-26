@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback, createContext, useContext } from "react";
+import FuturisticLogin from "./components/NeonAuthKit";
 
 /**
  * Emotsioonid – Minimal SPA Frontend
@@ -110,45 +111,10 @@ function Badge({ children }){
 // ---------- Pages
 function LoginPage(){
   const { signIn } = useAuth();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function onSubmit(e){
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try{
-      await signIn(username, password);
-    }catch(err){
-      setError(err.message || "Sisselogimine ebaõnnestus");
-    }finally{ setLoading(false); }
-  }
-
-  return (
-    <div className="min-h-screen grid place-items-center bg-slate-50 p-4">
-      <Card className="w-full max-w-md p-6">
-        <h1 className="text-2xl font-semibold mb-2">Emotsioonid</h1>
-        <p className="text-slate-600 mb-6">Logi sisse, et näha oma klassi õpilasi ja lisada emotsioone.</p>
-        <form onSubmit={onSubmit} className="space-y-3">
-          <div>
-            <label className="text-sm text-slate-700">Kasutajanimi</label>
-            <Input value={username} onChange={e=>setUsername(e.target.value)} autoFocus placeholder="teacher01" />
-          </div>
-          <div>
-            <label className="text-sm text-slate-700">Parool</label>
-            <Input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" />
-          </div>
-          {error && <div className="text-sm text-red-600">{error}</div>}
-          <Button disabled={loading} className="w-full bg-slate-900 text-white border-slate-900">
-            {loading ? "Sisselogimine..." : "Logi sisse"}
-          </Button>
-        </form>
-        <p className="mt-4 text-xs text-slate-500">API: {API_URL || "(määramata – seadista VITE_API_URL)"}</p>
-      </Card>
-    </div>
-  );
+  // Neon login: call signIn when form submits
+  return <FuturisticLogin onSignIn={async ({ email, password }) => {
+    await signIn(email, password);
+  }} />;
 }
 
 function Dashboard(){
