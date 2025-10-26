@@ -1,9 +1,11 @@
-fastapi>=0.104.1
-uvicorn[standard]>=0.24.0
-sqlmodel>=0.0.14
-SQLAlchemy>=2.0.23
-pydantic-settings>=2.0.3
-passlib[bcrypt]>=1.7.4
-python-jose[cryptography]>=3.3.0
-email-validator>=2.1.0
-python-multipart>=0.0.6
+# Django & DRF
+Django>=5.2.0
+djangorestframework>=3.15.0
+drf-spectacular>=0.27.0
+django-cors-headers>=4.5.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# Development
+ipython>=8.20.0

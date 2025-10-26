@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useState, useCallback, createContext, useCon
  * .env: VITE_API_URL (e.g. http://localhost:8000)
  *
  * Endpoints used:
- *  - POST   /auth/token                         (OAuth2 password flow)
+ *  - POST   /auth/token                         (Django session auth)
  *  - GET    /students                           (teacher sees only their class)
  *  - GET    /emotions/by-student/{student_id}   (list history)
  *  - POST   /emotions                           (create new emotion entry)
@@ -15,14 +15,14 @@ import React, { useEffect, useMemo, useState, useCallback, createContext, useCon
 // ---------- Helpers
 const API_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "";
 
-async function apiFetch(path, { method = "GET", body, token, headers } = {}) {
+async function apiFetch(path, { method = "GET", body, headers } = {}) {
   const res = await fetch(`${API_URL}${path}`, {
     method,
     headers: {
       "Content-Type": body instanceof FormData ? undefined : "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },
+    credentials: 'include',  // Important for session cookies
     body: body ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined,
   });
   if (!res.ok) {
@@ -43,28 +43,31 @@ function useAuth(){
   return ctx;
 }
 function AuthProvider({ children }){
-  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
-  const [user, setUser] = useState(null); // optional decoded info or fetched /users/me if you add it later
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
 
   const signIn = useCallback(async (username, password) => {
-    // FastAPI OAuth2 password flow expects form-encoded body
-    const form = new FormData();
-    form.set("username", username);
-    form.set("password", password);
-    const data = await apiFetch("/auth/token", { method: "POST", body: form });
-    if (!data?.access_token) throw new Error("No access_token in response");
-    localStorage.setItem("token", data.access_token);
-    setToken(data.access_token);
-    return data.access_token;
+    // Django expects regular form-encoded or JSON body
+    const data = await apiFetch("/auth/token", { 
+      method: "POST", 
+      body: { username, password }
+    });
+    setIsAuthenticated(true);
+    setUser(data.user || { username });
+    return data;
   }, []);
 
-  const signOut = useCallback(() => {
-    localStorage.removeItem("token");
-    setToken("");
+  const signOut = useCallback(async () => {
+    try {
+      await apiFetch("/auth/logout", { method: "POST" });
+    } catch (e) {
+      console.error("Logout error:", e);
+    }
+    setIsAuthenticated(false);
     setUser(null);
   }, []);
 
-  const value = useMemo(() => ({ token, user, setUser, signIn, signOut }), [token, user, signIn, signOut]);
+  const value = useMemo(() => ({ isAuthenticated, user, setUser, signIn, signOut }), [isAuthenticated, user, signIn, signOut]);
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
 
@@ -149,7 +152,7 @@ function LoginPage(){
 }
 
 function Dashboard(){
-  const { token, signOut } = useAuth();
+  const { signOut } = useAuth();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -159,13 +162,13 @@ function Dashboard(){
     setLoading(true);
     setError("");
     try{
-      const data = await apiFetch("/students", { token });
-      setStudents(Array.isArray(data) ? data : data?.items || []);
+      const data = await apiFetch("/students/");
+      setStudents(Array.isArray(data) ? data : data?.results || []);
     }catch(err){
       setError(err.message);
-      if(String(err.message).includes("401")) signOut();
+      if(String(err.message).includes("401") || String(err.message).includes("403")) signOut();
     }finally{ setLoading(false); }
-  }, [token, signOut]);
+  }, [signOut]);
 
   useEffect(() => { loadStudents(); }, [loadStudents]);
 
@@ -238,7 +241,6 @@ function Modal({ title, children, onClose }){
 }
 
 function EmotionModal({ student, onClose }){
-  const { token } = useAuth();
   const [emotion, setEmotion] = useState(""); // e.g. happy/sad/angry/...
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
@@ -248,7 +250,7 @@ function EmotionModal({ student, onClose }){
   async function save(){
     setSaving(true); setError(""); setOk(false);
     try{
-      await apiFetch("/emotions", { method: "POST", token, body: {
+      await apiFetch("/emotions/", { method: "POST", body: {
         student_id: student.id,
         emotion,
         note
@@ -286,7 +288,6 @@ function EmotionModal({ student, onClose }){
 }
 
 function HistoryModal({ student, onClose }){
-  const { token } = useAuth();
   const [items, setItems] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -294,12 +295,12 @@ function HistoryModal({ student, onClose }){
   useEffect(() => {
     (async () => {
       try{
-        const data = await apiFetch(`/emotions/by-student/${student.id}`, { token });
-        setItems(Array.isArray(data) ? data : data?.items || []);
+        const data = await apiFetch(`/emotions/by-student/${student.id}/`);
+        setItems(Array.isArray(data) ? data : data?.results || []);
       }catch(err){ setError(err.message); }
       finally{ setLoading(false); }
     })();
-  }, [student.id, token]);
+  }, [student.id]);
 
   return (
     <Modal title={`Emotsioonide ajalugu – ${student.full_name || student.first_name || "Õpilane"}`} onClose={onClose}>
@@ -340,6 +341,6 @@ export default function App(){
 }
 
 function Gate(){
-  const { token } = useAuth();
-  return token ? <Dashboard /> : <LoginPage />;
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <Dashboard /> : <LoginPage />;
 }
