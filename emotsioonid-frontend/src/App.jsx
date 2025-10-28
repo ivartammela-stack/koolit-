@@ -28,7 +28,7 @@ async function apiFetch(path, { method = "GET", body, headers } = {}) {
   });
   if (!res.ok) {
     let detail = "";
-    try { const data = await res.json(); detail = data?.detail || JSON.stringify(data); } catch {}
+  try { const data = await res.json(); detail = data?.detail || JSON.stringify(data); } catch { /* ignore parse errors */ }
     throw new Error(`${res.status} ${res.statusText}${detail ? ` – ${detail}` : ""}`);
   }
   // some endpoints return no content
