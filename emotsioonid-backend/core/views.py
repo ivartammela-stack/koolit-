@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import authenticate, login, logout
 from .models import School, Student, EmotionEntry, User
-from .serializers import SchoolSerializer, StudentSerializer, EmotionEntrySerializer, UserSerializer
+from .serializers import SchoolSerializer, StudentSerializer, EmotionEntrySerializer, UserSerializer, UserCreateSerializer
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -68,3 +68,40 @@ class EmotionEntryViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset().filter(student_id=student_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+class UserViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing users (teachers and admins). Only accessible by admins."""
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        """Only admins can see users"""
+        if self.request.user.role == 'admin':
+            return User.objects.all().order_by('username')
+        return User.objects.none()
+    
+    def get_serializer_class(self):
+        """Use UserCreateSerializer for create/update to handle password"""
+        if self.action in ['create', 'update', 'partial_update']:
+            return UserCreateSerializer
+        return UserSerializer
+    
+    def perform_create(self, serializer):
+        """Admin can create new users"""
+        if self.request.user.role != 'admin':
+            raise PermissionError("Only admins can create users")
+        serializer.save()
+    
+    def perform_update(self, serializer):
+        """Admin can update users"""
+        if self.request.user.role != 'admin':
+            raise PermissionError("Only admins can update users")
+        serializer.save()
+    
+    def perform_destroy(self, instance):
+        """Admin can delete users, but not themselves"""
+        if self.request.user.role != 'admin':
+            raise PermissionError("Only admins can delete users")
+        if instance.id == self.request.user.id:
+            raise PermissionError("You cannot delete yourself")
+        instance.delete()

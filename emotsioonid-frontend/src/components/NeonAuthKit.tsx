@@ -13,8 +13,8 @@ export const dict = {
   et: {
     title: "Tere tulemast tagasi",
     subtitle: "Logi oma kontole",
-    email: "E-post",
-    emailPlaceholder: "sinunimi@näide.ee",
+    email: "Kasutajanimi",
+    emailPlaceholder: "admin",
     password: "Parool",
     passwordPlaceholder: "••••••••",
     remember: "Jäta mind meelde",
@@ -23,16 +23,16 @@ export const dict = {
     or: "või",
     register: "Registreeru uueks kasutajaks",
     errors: {
-      emailRequired: "E-post on kohustuslik",
-      emailInvalid: "Palun sisesta korrektne e-post",
+      emailRequired: "Kasutajanimi on kohustuslik",
+      emailInvalid: "Palun sisesta kasutajanimi",
       passwordRequired: "Parool on kohustuslik",
     },
   },
   en: {
     title: "Welcome back",
     subtitle: "Sign in to your account",
-    email: "Email",
-    emailPlaceholder: "you@example.com",
+    email: "Username",
+    emailPlaceholder: "admin",
     password: "Password",
     passwordPlaceholder: "••••••••",
     remember: "Remember me",
@@ -41,8 +41,8 @@ export const dict = {
     or: "or",
     register: "Create a new account",
     errors: {
-      emailRequired: "Email is required",
-      emailInvalid: "Please enter a valid email",
+      emailRequired: "Username is required",
+      emailInvalid: "Please enter a username",
       passwordRequired: "Password is required",
     },
   },
@@ -116,10 +116,10 @@ const PasswordInput:React.FC<{value:string; onChange:(v:string)=>void; placehold
   );
 };
 
-const EmailInput:React.FC<{value:string; onChange:(v:string)=>void; placeholder?:string;}> = ({ value, onChange, placeholder }) => (
+const UsernameInput:React.FC<{value:string; onChange:(v:string)=>void; placeholder?:string;}> = ({ value, onChange, placeholder }) => (
   <div className="flex items-center">
     <Mail className="ml-3 h-4 w-4 text-white/60" />
-    <input type="email" value={value} onChange={(e)=>onChange(e.target.value)} placeholder={placeholder} className="w-full bg-transparent px-3 py-3 text-white placeholder-white/30 outline-none" autoComplete="email" />
+    <input type="text" value={value} onChange={(e)=>onChange(e.target.value)} placeholder={placeholder} className="w-full bg-transparent px-3 py-3 text-white placeholder-white/30 outline-none" autoComplete="username" />
   </div>
 );
 
@@ -142,7 +142,7 @@ export const FuturisticLogin:React.FC<LoginProps> = ({ defaultLocale = "et", onS
 
   const validate = () => {
     const next: {email?:string; password?:string} = {};
-    if(!email) next.email = t.errors.emailRequired; else if(!emailRegex.test(email)) next.email = t.errors.emailInvalid;
+    if(!email) next.email = t.errors.emailRequired;
     if(!password) next.password = t.errors.passwordRequired;
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -176,7 +176,7 @@ export const FuturisticLogin:React.FC<LoginProps> = ({ defaultLocale = "et", onS
                 <LanguageSwitcher locale={locale} setLocale={setLocale} />
               </div>
               <div className="space-y-5">
-                <FieldWrapper label={t.email} icon={<Mail className="h-4 w-4" />}> <EmailInput value={email} onChange={setEmail} placeholder={t.emailPlaceholder} /> </FieldWrapper>
+                <FieldWrapper label={t.email} icon={<Mail className="h-4 w-4" />}> <UsernameInput value={email} onChange={setEmail} placeholder={t.emailPlaceholder} /> </FieldWrapper>
                 {errors.email && <p className="mt-1 text-xs text-rose-300">{errors.email}</p>}
                 <FieldWrapper label={t.password} icon={<Lock className="h-4 w-4" />}> <PasswordInput value={password} onChange={setPassword} placeholder={t.passwordPlaceholder} /> </FieldWrapper>
                 {errors.password && <p className="mt-1 text-xs text-rose-300">{errors.password}</p>}
