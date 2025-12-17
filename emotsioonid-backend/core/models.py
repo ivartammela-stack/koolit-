@@ -6,9 +6,11 @@ class User(AbstractUser):
     ROLE_CHOICES = [
         ('admin', 'Admin'),
         ('teacher', 'Teacher'),
+        ('counselor', 'Counselor'),
+        ('student', 'Student'),
     ]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='teacher')
-    class_label = models.CharField(max_length=50, blank=True, null=True, help_text="Klassi nimetus, mida õpetaja õpetab")
+    class_label = models.CharField(max_length=50, blank=True, null=True, help_text="Klassi nimetus, mida õpetaja õpetab või kuhu õpilane kuulub")
     
     class Meta:
         db_table = 'auth_user'

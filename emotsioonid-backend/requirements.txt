@@ -1,5 +1,5 @@
-# Django & DRF
-Django>=5.2.0
+# Django & DRF (Python 3.9 compatible)
+Django>=4.2.0,<5.0.0
 djangorestframework>=3.15.0
 drf-spectacular>=0.27.0
 django-cors-headers>=4.5.0
@@ -8,4 +8,4 @@ django-cors-headers>=4.5.0
 python-dotenv>=1.0.0
 
 # Development
-ipython>=8.20.0
+ipython>=8.0.0,<8.20.0

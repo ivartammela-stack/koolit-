@@ -54,7 +54,8 @@ class EmotionEntrySerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'created_by_username']
     
     def create(self, validated_data):
-        validated_data['created_by'] = self.context['request'].user
+        # created_by is set in views.perform_create() after permission check
+        # student_id is already validated in views.perform_create()
         student_id = validated_data.pop('student_id')
         validated_data['student_id'] = student_id
         return super().create(validated_data)
